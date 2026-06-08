@@ -15,6 +15,7 @@ module Fingers
       @ctrl_action : String | Nil,
       @alt_action : String | Nil,
       @shift_action : String | Nil,
+      @begin_selection : Bool = false,
     )
     end
 
@@ -39,7 +40,7 @@ module Fingers
       cmd.input.flush
     end
 
-    private getter :match, :modifier, :hint, :original_pane, :offset, :mode, :main_action, :ctrl_action, :alt_action, :shift_action
+    private getter :match, :modifier, :hint, :original_pane, :offset, :mode, :begin_selection, :main_action, :ctrl_action, :alt_action, :shift_action
 
     def final_shell_command
       return jump if mode == "jump"
@@ -82,6 +83,7 @@ module Fingers
       `tmux send-keys -t #{original_pane.pane_id} -X top-line`
       `tmux send-keys -t #{original_pane.pane_id} -N #{offset.not_nil![0]} -X cursor-down`
       `tmux send-keys -t #{original_pane.pane_id} -N #{offset.not_nil![1]} -X cursor-right`
+      `tmux send-keys -t #{original_pane.pane_id} -X begin-selection` if begin_selection
 
       nil
     end

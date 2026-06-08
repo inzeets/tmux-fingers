@@ -30,6 +30,7 @@ module Fingers::Commands
     @last_key_table : String = "root"
     @last_pane_id : String | Nil
     @mode : String = "default"
+    @begin_selection : Bool = false
     @pane_id : String = ""
     @active_pane : Tmux::Pane | Nil
     @patterns : Array(String) = [] of String
@@ -51,6 +52,17 @@ module Fingers::Commands
       add_option "patterns",
                  description: "comma separated list of pattern names",
                  type: :single
+
+      add_option "query",
+                 description: "match this literal string instead of named patterns (case-insensitive)",
+                 type: :single
+
+      add_option "query-option",
+                 description: "like --query, but read the literal from the given tmux option name (avoids quoting issues with \" and friends)",
+                 type: :single
+
+      add_option "select",
+                 description: "in jump mode, begin a copy-mode selection at the landing point"
 
       add_option "main-action",
                  description: "command to which the output will be piped",
@@ -82,9 +94,15 @@ module Fingers::Commands
 
     def run(arguments, options) : Nil
       @mode = options.get("mode").as_s
+      @begin_selection = options.has?("select")
       parse_pane_target_format!(arguments.get("pane_id").as_s)
 
-      if options.has?("patterns")
+      if options.has?("query")
+        @patterns = [literal_pattern(options.get("query").as_s)]
+      elsif options.has?("query-option")
+        query = `tmux show-option -gqv #{options.get("query-option").as_s}`.chomp
+        @patterns = [literal_pattern(query)]
+      elsif options.has?("patterns")
         @patterns = patterns_from_options(options.get("patterns").as_s)
       else
         @patterns = Fingers.config.patterns.values
@@ -106,6 +124,10 @@ module Fingers::Commands
       handle_input
       process_result
       teardown
+    end
+
+    private def literal_pattern(query : String) : String
+      "(?i:#{Regex.escape(query)})"
     end
 
     private def patterns_from_options(pattern_names_option : String)
@@ -216,6 +238,7 @@ module Fingers::Commands
         original_pane: active_pane,
         offset: match ? match.not_nil!.offset : nil,
         mode: mode,
+        begin_selection: @begin_selection,
         main_action: @main_action,
         ctrl_action: @ctrl_action,
         alt_action: @alt_action,
