@@ -34,7 +34,7 @@ jobs:
 
       - uses: crystal-lang/install-crystal@v1
         with:
-          crystal: 1.19
+          crystal: 1.18
 
       - name: Install dependencies
         run: shards install
@@ -69,7 +69,7 @@ jobs:
 
       - uses: crystal-lang/install-crystal@v1
         with:
-          crystal: 1.19
+          crystal: 1.18
 
       - name: Install dependencies
         run: shards install
