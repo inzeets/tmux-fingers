@@ -1,5 +1,5 @@
 ---
-version: 2.7.0.wsl1
+version: 2.7.0.wsl1.1
 name: fingers
 authors:
 - Jorge Morante <jorge@morante.eu>
