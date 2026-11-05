@@ -74,11 +74,10 @@ jobs:
       - name: Install dependencies
         run: shards install
 
-      - name: Fetch main branches
+      - name: Fetch master
         run: |
-          git fetch origin master develop
+          git fetch origin master
           git branch -f master origin/master 2>/dev/null || true
-          git branch -f develop origin/develop 2>/dev/null || true
 
       - name: Setup tmux version for benchmark
         run: |
@@ -87,7 +86,7 @@ jobs:
           tmux -V
 
       - name: Run benchmark
-        run: crystal run dev/benchmark.cr -- ${GITHUB_SHA} develop
+        run: crystal run dev/benchmark.cr -- ${GITHUB_SHA} master
         env:
           PATH: /usr/local/bin:/usr/bin:${{ env.PATH }}
           BENCHMARK_RUNS: 250
