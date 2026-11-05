@@ -149,9 +149,9 @@ module Fingers::Commands
     end
 
     private def track_tmux_state
-      output = tmux.exec("display-message -t '{last}' -p '\#{pane_id};\#{client_key_table};\#{prefix};\#{prefix2}'").chomp
+      output = tmux.exec("display-message -t '{last}' -p '\#{pane_id};\#{client_key_table}'").chomp
 
-      last_pane_id, last_key_table, prefix, prefix2 = output.split(";")
+      last_pane_id, last_key_table = output.split(";")
 
       @last_pane_id = last_pane_id
       @last_key_table = if last_key_table.empty?
@@ -160,12 +160,15 @@ module Fingers::Commands
                           last_key_table
                         end
 
-      @original_options["prefix"] = prefix
-      @original_options["prefix2"] = prefix2
+      # global, not #{prefix}: restore_options writes with -g, so a session-local prefix would leak
+      @original_options["prefix"] = tmux.get_global_option("prefix")
+      @original_options["prefix2"] = tmux.get_global_option("prefix2")
     end
 
     private def restore_options
       @original_options.each do |option, value|
+        next if value.empty?
+
         tmux.set_global_option(option, value)
       end
     end
