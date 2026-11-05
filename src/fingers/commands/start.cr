@@ -149,9 +149,11 @@ module Fingers::Commands
     end
 
     private def track_tmux_state
-      output = tmux.exec("display-message -t '{last}' -p '\#{pane_id};\#{client_key_table}'").chomp
+      # one invocation, three commands: a second tmux call costs ~1.5ms of the ~14ms start
+      output = tmux.exec("display-message -t '{last}' -p '\#{pane_id};\#{client_key_table}' \\; show -gqv prefix \\; show -gqv prefix2").chomp
+      lines = output.split("\n")
 
-      last_pane_id, last_key_table = output.split(";")
+      last_pane_id, last_key_table = lines[0].split(";")
 
       @last_pane_id = last_pane_id
       @last_key_table = if last_key_table.empty?
@@ -161,8 +163,8 @@ module Fingers::Commands
                         end
 
       # global, not #{prefix}: restore_options writes with -g, so a session-local prefix would leak
-      @original_options["prefix"] = tmux.get_global_option("prefix")
-      @original_options["prefix2"] = tmux.get_global_option("prefix2")
+      @original_options["prefix"] = lines[1]? || ""
+      @original_options["prefix2"] = lines[2]? || ""
     end
 
     private def restore_options
